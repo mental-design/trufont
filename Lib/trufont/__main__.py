@@ -111,6 +111,15 @@ def main():
             # without opening any window. Since Qt infers new menu bar on
             # focus change, fire the signal.
             app.focusWindowChanged.emit(None)
+
+    def handle_applicationStateChanged(state):
+        if state == Qt.ApplicationActive and app._starting:
+            app._starting = False
+            platformSpecific.setUTIHandler()
+
+    app._starting = True
+    app.applicationStateChanged.connect(handle_applicationStateChanged)
+
     sys.exit(app.exec_())
 
 

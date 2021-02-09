@@ -127,18 +127,65 @@ def windowCommandsInMenu():
 
 
 def setAppName():
-    if sys.platform == "darwin":
-        try:
-            from Foundation import NSBundle
+    # macOS specific
+    if sys.platform != "darwin":
+        return
 
-            bundle = NSBundle.mainBundle()
-            if bundle:
-                app_info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
-                if app_info:
-                    app_info["CFBundleName"] = "TruFont"
-        except ImportError as e:
-            print(f"Could not set title: {e}")
-            pass
+    try:
+        from Foundation import NSBundle
+
+        bundle = NSBundle.mainBundle()
+        if bundle:
+            app_info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
+            if app_info:
+                app_info["CFBundleName"] = "TruFont"
+                app_info["CFBundleIdentifier"] = "com.TruFont.TruFont"
+                app_info["CFBundleLongVersionString"] = "TruFont"
+                app_info["CFBundleExecutable"] = "TruFont"
+                app_info["NSHumanReadableCopyright"] = "(c) 2015–2017 TruFont."
+
+                bundleType = app_info["CFBundleDocumentTypes"][0]
+                bundleType["CFBundleTypeName"] = "UnifiedFontObject"
+                bundleType["CFBundleTypeRole"] = "Editor"
+                bundleType["LSTypeIsPackage"] = True
+                bundleType["NSDocumentClass"] = "GSDocument"
+                bundleType["LSItemContentTypes"] = ["org.unifiedfontobject.ufo"]
+                bundleType["NSExportableTypes"] = ["org.unifiedfontobject.ufo"]
+                bundleType.pop("CFBundleTypeOSTypes", None)
+                utiInfo = [
+                    {
+                        "UTTypeConformsTo": "com.apple.package",
+                        "UTTypeDescription": "Unified Font Object",
+                        "UTTypeIdentifier": "org.unifiedfontobject.ufo",
+                        "UTTypeReferenceURL": "https://unifiedfontobject.org",
+                        "UTTypeTagSpecification": {"public.filename-extension": "ufo"},
+                    }
+                ]
+                app_info.addObject_forKey_(utiInfo, "UTImportedTypeDeclarations")
+    except ImportError as e:
+        print(f"Could not set title: {e}")
+        pass
+
+
+def setUTIHandler():
+    # macOS specific
+    if sys.platform != "darwin":
+        return
+
+    import LaunchServices
+    from LaunchServices import LSSetDefaultRoleHandlerForContentType, kLSRolesEditor
+    from AppKit import NSRunningApplication
+
+    print(f"{dir(LaunchServices)}")
+
+    pid = os.getpid()
+    app = NSRunningApplication.runningApplicationWithProcessIdentifier_(pid)
+
+    uniform_type_identifier = "org.unifiedfontobject.ufo"
+    bundle_identifier = app.bundleIdentifier()
+    LSSetDefaultRoleHandlerForContentType(
+        uniform_type_identifier, kLSRolesEditor, bundle_identifier
+    )
 
 
 # -----------
