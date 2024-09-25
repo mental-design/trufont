@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize, QStandardPaths, Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -260,6 +260,12 @@ class MetricsWindowTab(QWidget):
         self.removeItemButton = QPushButton(self)
         self.removeItemButton.setIcon(icons.i_minus())
         self.removeItemButton.clicked.connect(self.removeItem)
+        self.importItemButton = QPushButton(self)
+        self.importItemButton.setText(self.tr("Import"))
+        self.importItemButton.clicked.connect(self.importItems)
+        self.exportItemButton = QPushButton(self)
+        self.exportItemButton.setText(self.tr("Export"))
+        self.exportItemButton.clicked.connect(self.exportItems)
 
         buttonsLayout = QHBoxLayout()
         buttonsLayout.addWidget(self.addItemButton)
@@ -267,6 +273,8 @@ class MetricsWindowTab(QWidget):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         buttonsLayout.addWidget(spacer)
+        buttonsLayout.addWidget(self.importItemButton)
+        buttonsLayout.addWidget(self.exportItemButton)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.inputTextLabel)
@@ -288,6 +296,53 @@ class MetricsWindowTab(QWidget):
         self.inputTextList.takeItem(i)
         if not self.inputTextList.count():
             self.removeItemButton.setEnabled(False)
+
+    def importItems(self):
+        # Open import dialog
+        directory = QStandardPaths.standardLocations(QStandardPaths.DocumentsLocation)[
+            0
+        ]
+        dialog = QFileDialog(self, self.tr("Import Metrics File"), directory)
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        if directory:
+            dialog.setDirectory(directory)
+        ok = dialog.exec_()
+        settings.setSaveFileDialogState(dialog.saveState())
+        if ok:  # Read from file
+            path = dialog.selectedFiles()[0]
+            with open(path, "r") as fp:
+                lines = fp.readlines()
+                self.inputTextList.clear()
+                for line in lines:
+                    item = QListWidgetItem(line.strip(), self.inputTextList)
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+
+    def exportItems(self):
+        # Get entries
+        entries = []
+        for i in range(self.inputTextList.count()):
+            item = self.inputTextList.item(i)
+            entries.append(item.text())
+
+        # Open save dialog
+        state = settings.saveFileDialogState()
+        directory = (
+            None
+            if state
+            else QStandardPaths.standardLocations(QStandardPaths.DocumentsLocation)[0]
+        )
+        dialog = QFileDialog(self, self.tr("Export Metrics File"), directory)
+        if state:
+            dialog.restoreState(state)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if directory:
+            dialog.setDirectory(directory)
+        ok = dialog.exec_()
+        settings.setSaveFileDialogState(dialog.saveState())
+        if ok:  # Write to file
+            path = dialog.selectedFiles()[0]
+            with open(path, "w") as fp:
+                fp.write("\n".join(entries))
 
     def readSettings(self):
         self.inputTextList.clear()
