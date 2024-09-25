@@ -18,7 +18,7 @@ from defcon import Color
 from fontTools.misc.transform import Identity
 from fontTools.pens.qtPen import QtPen
 from fontTools.pens.transformPen import TransformPen
-from PyQt5.QtCore import QLineF, QPointF, Qt
+from PyQt5.QtCore import QLineF, QPointF, QRectF, Qt
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -411,7 +411,7 @@ def drawFontPostscriptFamilyBlues(painter, glyph, scale, color=None):
 
 def _drawBlues(painter, glyph, blues, color):
     for yMin, yMax in zip(blues[::2], blues[1::2]):
-        painter.fillRect(0, yMin, glyph.width, yMax - yMin, color)
+        painter.fillRect(QRectF(0, yMin, glyph.width, yMax - yMin), color)
 
 
 # Image
@@ -482,12 +482,12 @@ def drawGlyphMetrics(
         lo = metrics[0]
         hi = max(y for y in metrics[-2:] if y is not None)
         painter.drawLine(0, lo, 0, hi)
-        painter.drawLine(glyph.width, lo, glyph.width, hi)
+        painter.drawLine(QPointF(glyph.width, lo), QPointF(glyph.width, hi))
     if drawVMetrics:
         for y in metrics:
             if y is None:
                 continue
-            painter.drawLine(0, y, glyph.width, y)
+            painter.drawLine(QPointF(0, y), QPointF(glyph.width, y))
     painter.restore()
     # metrics text
     if drawText:
@@ -764,6 +764,59 @@ def drawGlyphPoints(
             drawTextAtPoint(
                 painter, text, posX, posY, scale, xAlign="center", yAlign="top"
             )
+        painter.restore()
+
+
+# Curvature
+
+
+def toCurvaturePoint(crvData, crvScale):
+    return (
+        crvData["x"] - crvData["dy"] * crvData["c"] * crvScale,
+        crvData["y"] + crvData["dx"] * crvData["c"] * crvScale,
+    )
+
+
+def drawGlyphCurvatures(painter, glyph, scale, curvatureScale, drawCurvatures=True):
+    # Drawing piece-wise linear for now
+    if drawCurvatures:
+        curvatureData = glyph.getRepresentation("defconQt.CurvatureInformation")
+
+        # Create Paths
+        curvaturePath = QPainterPath()
+        stemPath = QPainterPath()
+
+        for curvatureInfo in curvatureData:
+            # Curvature
+            # Translate to points
+            curvaturePoints = [
+                toCurvaturePoint(info, curvatureScale) for info in curvatureInfo
+            ]
+            # Path
+            curvaturePath.moveTo(curvaturePoints[0][0], curvaturePoints[0][1])
+            for pt in curvaturePoints[1:]:
+                curvaturePath.lineTo(pt[0], pt[1])
+
+            # Stems
+            for segPoint, crvPoint in zip(curvatureInfo, curvaturePoints):
+                stemPath.moveTo(segPoint["x"], segPoint["y"])
+                stemPath.lineTo(crvPoint[0], crvPoint[1])
+
+        # Draw
+        painter.save()
+
+        # Draw curvature
+        curvePen = QPen(QColor.fromRgbF(1, 0, 0, 1))
+        curvePen.setWidthF(1 * scale)
+        painter.setPen(curvePen)
+        painter.drawPath(curvaturePath)
+
+        # Draw stems
+        stemPen = QPen(QColor.fromRgbF(1, 0, 0, 0.7))
+        stemPen.setWidthF(0.5 * scale)
+        painter.setPen(stemPen)
+        painter.drawPath(stemPath)
+
         painter.restore()
 
 
