@@ -36,7 +36,7 @@ from trufont.objects import settings
 from trufont.objects.defcon import TGlyph
 from trufont.resources import icons_db  # noqa
 
-pointSizes = [50, 75, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
+pointSizes = [15, 25, 50, 75, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
 
 
 class MetricsWindow(BaseWindow):
@@ -71,6 +71,7 @@ class MetricsWindow(BaseWindow):
 
         self.toolbar.setPointSize(self.lineView.pointSize())
         self.toolbar.setWrapLines(True)
+        self.toolbar.setShowKerning(True)
         self.toolbar.setText(string)
 
         layout = QVBoxLayout(self)
@@ -278,7 +279,7 @@ class MetricsToolBar(QToolBar):
         self._wrapLines.setCheckable(True)
         self.toolsMenu.addSeparator()
         action = self.toolsMenu.addAction(self.tr("Line Height:"))
-        action.setEnabled(False)
+        action.setEnabled(True)
         lineHeight = QWidgetAction(self.toolsMenu)
         self._lineHeightSlider = slider = QSlider(Qt.Horizontal, self)
         # QSlider works with integers so we'll just divide what comes out of it
@@ -365,6 +366,10 @@ class MetricsToolBar(QToolBar):
 
     def setWrapLines(self, value):
         self._wrapLines.setChecked(value)
+        self._controlsTriggered()
+
+    def setShowKerning(self, value):
+        self._showKerning.setChecked(value)
         self._controlsTriggered()
 
     # TODO: more methods
@@ -589,7 +594,7 @@ class MetricsTable(QTableWidget):
         self.horizontalHeader().hide()
         self.verticalHeader().hide()
         self._coloredColumn = None
-        self._kerningEnabled = False
+        self._kerningEnabled = True
 
         # always show a scrollbar to fix layout
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
