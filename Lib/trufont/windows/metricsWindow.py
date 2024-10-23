@@ -286,7 +286,7 @@ class MetricsToolBar(QToolBar):
         # by 100
         slider.setMinimum(80)
         slider.setMaximum(160)
-        slider.setValue(110)
+        slider.setValue(130)
         slider.valueChanged.connect(self._controlsTriggered)
         slider.valueChanged.connect(self._sliderLineHeightChanged)
         lineHeight.setDefaultWidget(slider)
