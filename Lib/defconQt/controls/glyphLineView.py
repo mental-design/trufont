@@ -65,7 +65,7 @@ class GlyphLineWidget(QWidget):
 
         self._drawMetrics = False
         self._verticalFlip = False
-        self._lineHeight = 1.1
+        self._lineHeight = 1.3
         self._rightToLeft = False
         self._wrapLines = False
 
@@ -327,7 +327,7 @@ class GlyphLineWidget(QWidget):
         Sets the line-height factor to *scale*. 1.0 means no extra vertical
         space is added around each line of text.
 
-        The default value is 1.1.
+        The default value is 1.3.
         """
         self._lineHeight = scale
         self.adjustSize()

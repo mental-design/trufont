@@ -2,7 +2,15 @@ import math
 
 from fontTools.misc.transform import Identity
 from PyQt5.QtCore import QLineF, QPointF, Qt
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QTransform
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QTransform,
+    QFont,
+)
 
 from defconQt.tools import platformSpecific
 from defconQt.tools.drawing import (
@@ -158,7 +166,7 @@ def _drawGuidelines(
                 # make an infinite line that intersects *(line.x, line.y)*
                 # 1. make horizontal line from *(line.x, line.y)* of length
                 # *diagonal*
-                diagonal = math.sqrt(width ** 2 + height ** 2)
+                diagonal = math.sqrt(width**2 + height**2)
                 line1 = QLineF(line.x, line.y, line.x + diagonal, line.y)
                 # 2. set the angle
                 # defcon guidelines are clockwise
@@ -578,7 +586,8 @@ def drawGlyphPoints(
 def drawPointText(painter, x, y, scale, ishandle=False):
     color = defaultColor("glyphOtherPoints")
     font = painter.font()
-    font.setPointSize(7)
+    font.setPointSize(10)
+    font.setWeight(QFont.Light)
     if ishandle:
         color = color.lighter(135)
     painter.setPen(color)
